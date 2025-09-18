@@ -44,6 +44,7 @@ def load_api_key():
         GEMINI_API_KEY=key
         global client
         client = genai.Client()
+    print("Loaded API Key")
 
 #Gemini call to generate text
 def generate_text():
@@ -108,7 +109,11 @@ def splash(message):
     root.after(DURATION, root.destroy)
     
     #Early close with escape
-    root.bind("<Escape", lambda e: root.destroy())
+    root.bind("<Escape>", lambda e: root.destroy())
 
     root.background = background
     root.mainloop()
+
+if __name__ == "__main__":
+    print("Insprash Launching...")
+    main()
