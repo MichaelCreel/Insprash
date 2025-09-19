@@ -14,6 +14,7 @@ Terminal=false
 Icon=$(pwd)/icon.png
 EOF
 
+chmod +x Insprash.py
 chmod +x Insprash.desktop
 echo "Created Insprash.desktop"
 

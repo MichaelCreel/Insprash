@@ -10,6 +10,7 @@ cd "$(dirname "$0")"
 python3 Insprash.py
 EOF
 
+chmod +x Insprash.py
 chmod +x LaunchInsprash.command
 echo "Created LaunchInsprash.command"
 
