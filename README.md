@@ -5,18 +5,18 @@ Insprash is a customizable splash screen that greets users at login with inspiri
 ## Dependencies
 
 - Python, Tkinter, Google Gemini API
-  - Windows
+  - Windows:
     Install Python 3 from [python.org](https://python.org)
     Check "Add Python to PATH" during installation
     ```cmd
     pip install google-generativeai pillow
     ```
-  - Mac
+  - Mac:
     ```bash
     brew install python
     pip3 install google-generativeai pillow
     ```
-  - Linux
+  - Linux:
     ```bash
     sudo apt update
     sudo apt install python3 python3-pip
@@ -40,14 +40,14 @@ Insprash is a customizable splash screen that greets users at login with inspiri
   - Copy the API key when it generates
       If you are copying installation commands, leave the API tab open to recopy the API key during setup
 2. Open a terminal
-  - Windows
+  - Windows:
     `Windows + X`
     Click PowerShell
-  - Mac
+  - Mac:
     `Command + Space`
     Type Terminal
     `Enter`
-  - Linux
+  - Linux:
     `Ctrl + Alt + T`
 3. Clone the repository
   ```bash
@@ -58,16 +58,16 @@ Insprash is a customizable splash screen that greets users at login with inspiri
    cd Insprash
    ```
 5. Run setup
-   - Windows
+   - Windows:
      ```cmd
      Set-ExecutionPolicy Bypass -Scope Process
      .\windows_setup.ps1
      ```
-   - Mac
+   - Mac:
      ```bash
      chmod +x macos_setup.sh
      ./macos_setup.sh
-   - Linux
+   - Linux:
      ```bash
      chmod +x linux_setup.sh
      ./linux_setup.sh
