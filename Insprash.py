@@ -17,17 +17,7 @@ API_TIMEOUT = 7.5 # Duration for API Response
 TEXT_RATIO = 0.65
 GRAD_TOP = "#330c5a"
 GRAD_BOTTOM = "#831764"
-FALLBACK_TEXTS = [ #Fallbacks if Gemini API does not respond
-    "Visualize. Inspire. Create.",
-    "Never stop creating.",
-    "Build for the world.",
-    "Design your dreams.",
-    "Unleash your creativity.",
-    "Push your limits.",
-    "Dare to innovate.",
-    "Be bold. Be different.",
-    "Make it happen.",
-]
+FALLBACK_TEXTS = [] #Fallbacks if Gemini API does not respond
 
 PROMPT = "Generate one single, short, inspiring sentence about creativity or productivity that nicely greets people when they login to their computer. Don't surround it with any characters or apply any formatting, only write the sentence."
 
@@ -43,7 +33,9 @@ def main():
 
 def initialize():
     load_api_key()
-    global GRAD_TOP, GRAD_BOTTOM
+    global GRAD_TOP, GRAD_BOTTOM, FALLBACK_TEXTS
+
+    #Initialize Gradient Colors
     try:
         with open("gradient_colors", "r") as f:
             lines = f.readlines()
@@ -51,6 +43,14 @@ def initialize():
             GRAD_BOTTOM = lines[1].strip()
     except Exception as e:
         print(f"Error loading gradient colors: {e}")
+
+    #Initialize Fallback Lines
+    try:
+        with open("fallback_lines", "r") as f:
+            lines = f.readlines()
+            FALLBACK_TEXTS=lines
+    except Exception as e:
+        print(f"Error loading fallback lines: {e}")
 
 def update():
     def worker():
