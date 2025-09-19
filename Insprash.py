@@ -121,7 +121,7 @@ def splash(message):
     screen_height = root.winfo_screenheight()
     try:
         font_size = max(18, int(min(screen_width, screen_height) * 0.035))
-        font = ImageFont.truetype("Ubuntu-B.ttf", font_size)
+        font = ImageFont.truetype("font.ttf", font_size)
     except IOError:
         print("Font not found")
         font = ImageFont.load_default()
