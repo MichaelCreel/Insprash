@@ -1,12 +1,12 @@
 # Insprash
 
-An inspirational splash screen that runs on user login. Uses Google Gemini to generate messages when available. Designed for Windows, Mac, and Linux.
+Insprash is a customizable splash screen that greets users at login with inspiring messages. It uses Google Gemini to generate greeting text. It supports custom fonts and gradient colors. It is designed to run on Windows, Mac, and Linux and is simple to install and set up.
 
 ## Dependencies
 
 - Python, Tkinter, Google Gemini API
   - Windows
-    Install Python 3 from [python.org](python.org)
+    Install Python 3 from [python.org](https://python.org)
     Check "Add Python to PATH" during installation
     ```cmd
     pip install google-generativeai pillow
