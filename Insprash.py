@@ -1,20 +1,13 @@
 # Copyright 2025 Michael Creel
 
-import os
-import sys
 import random
-import requests
 import google.generativeai as genai
 import tkinter as tk
-import concurrent.futures
 import threading
-from tkinter import font as tkfont
 from PIL import Image, ImageTk, ImageDraw, ImageFont
-from google.generativeai import types
 
 DURATION = 20000 # Duration of splash in miliseconds
 API_TIMEOUT = 10 # Duration for API Response
-TEXT_RATIO = 0.65
 GRAD_TOP = "#330c5a"
 GRAD_BOTTOM = "#831764"
 FALLBACK_TEXTS = [] #Fallbacks if Gemini API does not respond
