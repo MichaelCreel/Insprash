@@ -38,8 +38,19 @@ screen_height = None
 font = None
 
 def main():
-    load_api_key()
+    initialize()
     splash("Booting...")
+
+def initialize():
+    load_api_key()
+    global GRAD_TOP, GRAD_BOTTOM
+    try:
+        with open("gradient_colors", "r") as f:
+            lines = f.readlines()
+            GRAD_TOP = lines[0].strip()
+            GRAD_BOTTOM = lines[1].strip()
+    except Exception as e:
+        print(f"Error loading gradient colors: {e}")
 
 def update():
     def worker():
