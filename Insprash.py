@@ -28,6 +28,7 @@ FALLBACK_TEXTS = [ #Fallbacks if Gemini API does not respond
 ]
 
 PROMPT = "Generate a short, inspiring sentence about creativity, productivity, etc. that nicely greets people when they login to their computer."
+PROMPT = "Generate one single, short, inspiring sentence about creativity or productivity that nicely greets people when they login to their computer. Don't surround it with any characters or apply any formatting, only write the sentence."
 
 def main():
     load_api_key()
@@ -42,21 +43,20 @@ def load_api_key():
         key=f.read().strip()
         genai.configure(api_key=key)
         GEMINI_API_KEY=key
-        global client
-        client = genai.Client()
+        genai.configure(api_key=key)
     print("Loaded API Key")
 
 #Gemini call to generate text
 def generate_text():
     try:
-        response = client.models.generate_content(
-            model="gemini-2.5-flash",
-            contents=PROMPT,
-            config=types.GenerateContentConfig(
-                thinking_config=types.ThinkingConfig(thinking_budget=0)
-            )
+        model = genai.GenerativeModel("gemini-2.5-flash")
+        response = model.generate_content(PROMPT
+            #PROMPT,
+            #generation_config=types.GenerationConfig(
+            #    temperature=0.7,
+            #    max_output_tokens=60
+            #)
         )
-        print (response)
         return response.text.strip()
     except Exception as e:
         print(f"Error generating text: {e}")
