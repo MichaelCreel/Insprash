@@ -13,7 +13,7 @@ from PIL import Image, ImageTk, ImageDraw, ImageFont
 from google.generativeai import types
 
 DURATION = 20000 # Duration of splash in miliseconds
-API_TIMEOUT = 7.5 # Duration for API Response
+API_TIMEOUT = 10 # Duration for API Response
 TEXT_RATIO = 0.65
 GRAD_TOP = "#330c5a"
 GRAD_BOTTOM = "#831764"
@@ -29,7 +29,7 @@ font = None
 
 def main():
     initialize()
-    splash("Booting...")
+    splash("Loading...")
 
 def initialize():
     load_api_key()
