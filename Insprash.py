@@ -6,34 +6,47 @@ import random
 import requests
 import google.generativeai as genai
 import tkinter as tk
+import concurrent.futures
+import threading
 from tkinter import font as tkfont
-from PIL import Image, ImageTk
+from PIL import Image, ImageTk, ImageDraw, ImageFont
 from google.generativeai import types
 
-DURATION = 7000 # Duration of splash in miliseconds
-API_TIMEOUT = 2.5 # Duration for API Response
+DURATION = 20000 # Duration of splash in miliseconds
+API_TIMEOUT = 7.5 # Duration for API Response
 TEXT_RATIO = 0.65
 GRAD_TOP = "#330c5a"
 GRAD_BOTTOM = "#831764"
 FALLBACK_TEXTS = [ #Fallbacks if Gemini API does not respond
-    "Visualize. Inspire. Create.",
-    "Never stop creating.",
-    "Build for the world.",
-    "Design your dreams.",
-    "Unleash your creativity.",
-    "Push your limits.",
-    "Dare to innovate.",
-    "Be bold. Be different.",
-    "Make it happen.",
+    # "Visualize. Inspire. Create.",
+    # "Never stop creating.",
+    # "Build for the world.",
+    # "Design your dreams.",
+    # "Unleash your creativity.",
+    # "Push your limits.",
+    # "Dare to innovate.",
+    # "Be bold. Be different.",
+    # "Make it happen.",
+    "API Unresponsive."
 ]
 
-PROMPT = "Generate a short, inspiring sentence about creativity, productivity, etc. that nicely greets people when they login to their computer."
 PROMPT = "Generate one single, short, inspiring sentence about creativity or productivity that nicely greets people when they login to their computer. Don't surround it with any characters or apply any formatting, only write the sentence."
+
+root = None
+background_label = None
+screen_width = None
+screen_height = None
+font = None
 
 def main():
     load_api_key()
-    message = generate_text()
-    splash(message)
+    splash("Booting...")
+
+def update():
+    def worker():
+        message = generate_text()
+        root.after(0, lambda: update_splash(message))
+    threading.Thread(target=worker, daemon=True).start()
 
 #Store the API key for Gemini
 def load_api_key():
@@ -48,23 +61,26 @@ def load_api_key():
 
 #Gemini call to generate text
 def generate_text():
-    try:
+    def gemini_call():
         model = genai.GenerativeModel("gemini-2.5-flash")
-        response = model.generate_content(PROMPT
-            #PROMPT,
-            #generation_config=types.GenerationConfig(
-            #    temperature=0.7,
-            #    max_output_tokens=60
-            #)
-        )
+        response = model.generate_content(PROMPT)
         return response.text.strip()
+    
+    try:
+        with concurrent.futures.ThreadPoolExecutor(max_workers=1) as executor:
+            future = executor.submit(gemini_call)
+            return future.result(timeout=API_TIMEOUT)
+    except concurrent.futures.TimeoutError:
+        print("Gemini API call timed out")
+        return random.choice(FALLBACK_TEXTS)
     except Exception as e:
         print(f"Error generating text: {e}")
         return random.choice(FALLBACK_TEXTS)
 
 #Generates the splash screen
 def splash(message):
-    print(message)
+    global root, background_label, screen_width, screen_height, font
+
     #Initialization
     root = tk.Tk()
     root.title("Inprash")
@@ -72,6 +88,29 @@ def splash(message):
     root.configure(background=GRAD_TOP)
     screen_width = root.winfo_screenwidth()
     screen_height = root.winfo_screenheight()
+    try:
+        font_size = max(18, int(min(screen_width, screen_height) * 0.035))
+        font = ImageFont.truetype("Ubuntu-B.ttf", font_size)
+    except IOError:
+        print("Font not found")
+        font = ImageFont.load_default()
+    
+    #Update the splash screen
+    update_splash(message)
+
+    #Call update
+    root.after(100, update)
+
+    #Auto close
+    root.after(DURATION, root.destroy)
+
+    #Early close with escape
+    root.bind("<Escape>", lambda e: root.destroy())
+    root.mainloop()
+
+#Update the splash screen
+def update_splash(message):
+    global root, background_label, screen_width, screen_height, font
 
     #Gradient
     gradient = Image.new("RGB", (1, screen_height), GRAD_TOP)
@@ -85,34 +124,26 @@ def splash(message):
         gradient.putpixel((0, y), (r, g, b))
 
     gradient = gradient.resize((screen_width, screen_height))
+
+    #Text
+    draw = ImageDraw.Draw(gradient)
+    bbox = draw.textbbox((0, 0), message, font=font)
+    text_width = bbox[2] - bbox[0]
+    text_height = bbox[3] - bbox[1]
+    x = (screen_width - text_width) // 2
+    y = (screen_height - text_height) //2
+    draw.text((x,y), message, font=font, fill="white")
+
+    #Convert to Tk Image
     background = ImageTk.PhotoImage(gradient)
-    background_label = tk.Label(root, image=background)
-    background_label.place(x=0, y=0, relwidth=1, relheight=1)
-
-    #Font
-    font_size = max(18, int(min(screen_width, screen_height) * 0.05))
-    splash_font = tkfont.Font(family="Helvetica", size=font_size, weight="bold")
-
-    #Message Setup
-    text_label = tk.Label(
-        root,
-        text=message,
-        font=splash_font,
-        fg="white",
-        bg=None,
-        wraplength=int(screen_width * TEXT_RATIO),
-        justify="center"
-    )
-    text_label.place(relx=0.5,rely=0.5, anchor="center")
-
-    #Auto close
-    root.after(DURATION, root.destroy)
-    
-    #Early close with escape
-    root.bind("<Escape>", lambda e: root.destroy())
+    if background_label is None:
+        background_label = tk.Label(root, image=background)
+        background_label.place(x=0, y=0, relwidth=1, relheight=1)
+    else:
+        background_label.configure(image=background)
+        background_label.image = background
 
     root.background = background
-    root.mainloop()
 
 if __name__ == "__main__":
     print("Insprash Launching...")
