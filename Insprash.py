@@ -19,7 +19,7 @@ GRAD_TOP = "#330c5a"
 GRAD_BOTTOM = "#831764"
 FALLBACK_TEXTS = [] #Fallbacks if Gemini API does not respond
 
-PROMPT = "Generate one single, short, inspiring sentence about creativity or productivity that nicely greets people when they login to their computer. Don't surround it with any characters or apply any formatting, only write the sentence."
+PROMPT = "Return 'Prompt not loaded'."
 
 root = None
 background_label = None
@@ -51,6 +51,15 @@ def initialize():
             FALLBACK_TEXTS=lines
     except Exception as e:
         print(f"Error loading fallback lines: {e}")
+
+    #Initialize Prompt
+    try:
+        with open("prompt", "r") as f:
+            lines = f.readlines()
+            global PROMPT
+            PROMPT="".join(lines).strip()
+    except Exception as e:
+        print(f"Error loading prompt: {e}")
 
 def update():
     def worker():
