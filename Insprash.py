@@ -18,16 +18,15 @@ TEXT_RATIO = 0.65
 GRAD_TOP = "#330c5a"
 GRAD_BOTTOM = "#831764"
 FALLBACK_TEXTS = [ #Fallbacks if Gemini API does not respond
-    # "Visualize. Inspire. Create.",
-    # "Never stop creating.",
-    # "Build for the world.",
-    # "Design your dreams.",
-    # "Unleash your creativity.",
-    # "Push your limits.",
-    # "Dare to innovate.",
-    # "Be bold. Be different.",
-    # "Make it happen.",
-    "API Unresponsive."
+    "Visualize. Inspire. Create.",
+    "Never stop creating.",
+    "Build for the world.",
+    "Design your dreams.",
+    "Unleash your creativity.",
+    "Push your limits.",
+    "Dare to innovate.",
+    "Be bold. Be different.",
+    "Make it happen.",
 ]
 
 PROMPT = "Generate one single, short, inspiring sentence about creativity or productivity that nicely greets people when they login to their computer. Don't surround it with any characters or apply any formatting, only write the sentence."
@@ -61,21 +60,40 @@ def load_api_key():
 
 #Gemini call to generate text
 def generate_text():
+    result = {"text": None}
+    timeout_triggered = threading.Event()
+
     def gemini_call():
-        model = genai.GenerativeModel("gemini-2.5-flash")
-        response = model.generate_content(PROMPT)
-        return response.text.strip()
+        if timeout_triggered.is_set():
+            return
+        try:
+            model = genai.GenerativeModel("gemini-2.5-flash")
+            response = model.generate_content(PROMPT)
+            if not timeout_triggered.is_set():
+                result["text"] = response.text.strip()
+        except Exception as e:
+            print(f"Error during Gemini API call: {e}")
     
-    try:
-        with concurrent.futures.ThreadPoolExecutor(max_workers=1) as executor:
-            future = executor.submit(gemini_call)
-            return future.result(timeout=API_TIMEOUT)
-    except concurrent.futures.TimeoutError:
-        print("Gemini API call timed out")
-        return random.choice(FALLBACK_TEXTS)
-    except Exception as e:
-        print(f"Error generating text: {e}")
-        return random.choice(FALLBACK_TEXTS)
+    def fallback():
+        timeout_triggered.set()
+        print("Gemini API Timeout, using fallback.")
+        result["text"] = random.choice(FALLBACK_TEXTS)
+
+    #Start Gemini call
+    thread = threading.Thread(target=gemini_call)
+    thread.start()
+
+    #Start timer
+    timer = threading.Timer(API_TIMEOUT, fallback)
+    timer.start()
+
+    #Check for result or timeout
+    while result["text"] is None and not timeout_triggered.is_set():
+        thread.join(timeout=0.1)
+
+    timer.cancel()
+    return result["text"]
+            
 
 #Generates the splash screen
 def splash(message):
