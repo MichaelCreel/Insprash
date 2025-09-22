@@ -129,6 +129,7 @@ def splash(message):
     root.title("Inprash")
     root.attributes("-fullscreen", True)
     root.configure(background=GRAD_TOP)
+    root.config(cursor="none")
     screen_width = root.winfo_screenwidth()
     screen_height = root.winfo_screenheight()
     try:

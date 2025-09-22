@@ -1,6 +1,7 @@
 #!/bin/bash
 
-read -p "Paste Gemini API Key (Ctrl + Shift + V): " key
+echo "Generate a Gemini API Key at https://aistudio.google.com/apikey"
+read -p "Paste Gemini API Key: " key
 echo "$key" > gemini_api_key
 echo "API Key Written."
 
@@ -21,3 +22,5 @@ end tell
 EOF
 
 echo "Added Insprash to Login Items."
+
+echo "Setup complete. Insprash should now run on user login."
