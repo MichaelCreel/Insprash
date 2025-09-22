@@ -1,5 +1,9 @@
+#!/usr/bin/env python3
+
 # Copyright 2025 Michael Creel
 
+import os
+import sys
 import random
 import google.generativeai as genai
 import tkinter as tk
@@ -30,7 +34,7 @@ def initialize():
 
     #Initialize Gradient Colors
     try:
-        with open("gradient_colors", "r") as f:
+        with open(get_source_path("gradient_colors"), "r") as f:
             lines = f.readlines()
             GRAD_TOP = lines[0].strip()
             GRAD_BOTTOM = lines[1].strip()
@@ -39,7 +43,7 @@ def initialize():
 
     #Initialize Fallback Lines
     try:
-        with open("fallback_lines", "r") as f:
+        with open(get_source_path("fallback_lines"), "r") as f:
             lines = f.readlines()
             FALLBACK_TEXTS=lines
     except Exception as e:
@@ -47,7 +51,7 @@ def initialize():
 
     #Initialize Prompt
     try:
-        with open("prompt", "r") as f:
+        with open(get_source_path("prompt"), "r") as f:
             lines = f.readlines()
             global PROMPT
             PROMPT="".join(lines).strip()
@@ -60,11 +64,19 @@ def update():
         root.after(0, lambda: update_splash(message))
     threading.Thread(target=worker, daemon=True).start()
 
+#Access file path
+def get_source_path(filename):
+    if getattr(sys, 'frozen', False):
+        base_path = os.path.dirname(sys.executable)
+    else:
+        base_path = os.path.dirname(os.path.abspath(__file__))
+    return os.path.join(base_path, filename)
+
 #Store the API key for Gemini
 def load_api_key():
     global GEMINI_API_KEY
     key=""
-    with open("gemini_api_key", "r") as f:
+    with open(get_source_path("gemini_api_key"), "r") as f:
         key=f.read().strip()
         genai.configure(api_key=key)
         GEMINI_API_KEY=key
@@ -121,7 +133,7 @@ def splash(message):
     screen_height = root.winfo_screenheight()
     try:
         font_size = max(18, int(min(screen_width, screen_height) * 0.035))
-        font = ImageFont.truetype("font.ttf", font_size)
+        font = ImageFont.truetype(get_source_path("font.ttf"), font_size)
     except IOError:
         print("Font not found")
         font = ImageFont.load_default()

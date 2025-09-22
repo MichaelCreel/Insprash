@@ -8,7 +8,7 @@ echo "API Key Written."
 cat <<EOF > Insprash.desktop
 [Desktop Entry]
 Name=Insprash
-Exec=python3 $(pwd)/Insprash.py
+Exec=$(pwd)/Insprash.py
 Type=Application
 Terminal=false
 Icon=$(pwd)/icon.png
