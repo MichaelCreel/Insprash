@@ -1,4 +1,5 @@
 #!/bin/bash
+#This script sets up Insprash for macOS systems.
 
 echo "Generate a Gemini API Key at https://aistudio.google.com/apikey"
 read -p "Paste Gemini API Key: " key
