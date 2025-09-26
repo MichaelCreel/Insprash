@@ -1,7 +1,7 @@
 #This script sets up Insprash for Windows systems.
 
 Write-Host "Generate a Gemini API Key at https://aistudio.google.com/apikey"
-$key = Read-Host "Paste Gemini API Key: "
+$key = Read-Host "Paste Gemini API Key: (Leave blank to skip Gemini) "
 Set-Content -Path "gemini_api_key" -Value $key
 Write-Host "API Key Written"
 

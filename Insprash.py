@@ -15,6 +15,7 @@ API_TIMEOUT = 10 # Duration for API Response
 GRAD_TOP = "#330c5a"
 GRAD_BOTTOM = "#831764"
 FALLBACK_TEXTS = [] #Fallbacks if Gemini API does not respond
+USE_GEMINI = True
 
 PROMPT = "Return 'Prompt not loaded'."
 
@@ -78,9 +79,13 @@ def load_api_key():
     key=""
     with open(get_source_path("gemini_api_key"), "r") as f:
         key=f.read().strip()
-        genai.configure(api_key=key)
-        GEMINI_API_KEY=key
-        genai.configure(api_key=key)
+        if key == "null" or key == "":
+            USE_GEMINI = False
+        else:
+            USE_GEMINI = True
+            genai.configure(api_key=key)
+            GEMINI_API_KEY=key
+            genai.configure(api_key=key)
     print("Loaded API Key")
 
 #Gemini call to generate text
@@ -91,13 +96,14 @@ def generate_text():
     def gemini_call():
         if timeout_triggered.is_set():
             return
-        try:
-            model = genai.GenerativeModel("gemini-2.5-flash")
-            response = model.generate_content(PROMPT)
-            if not timeout_triggered.is_set():
-                result["text"] = response.text.strip()
-        except Exception as e:
-            print(f"Error during Gemini API call: {e}")
+        if not USE_GEMINI:
+            try:
+                model = genai.GenerativeModel("gemini-2.5-flash")
+                response = model.generate_content(PROMPT)
+                if not timeout_triggered.is_set():
+                    result["text"] = response.text.strip()
+            except Exception as e:
+                print(f"Error during Gemini API call: {e}")
     
     def fallback():
         timeout_triggered.set()

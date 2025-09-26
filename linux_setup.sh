@@ -2,7 +2,7 @@
 #This script sets up Insprash for Linux systems.
 
 echo "Generate a Gemini API Key at https://aistudio.google.com/apikey"
-read -p "Paste Gemini API Key: " key
+read -p "Paste Gemini API Key: (Leave blank to skip Gemini) " key
 echo "$key" > gemini_api_key
 echo "API Key Written."
 
