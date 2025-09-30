@@ -95,7 +95,7 @@ Insprash is a customizable splash screen that greets users at login with inspiri
 - Multi-monitor display can be changed by editing `show_on_all_monitors`
 - Gemini has limited tokens on free API keys, so AI generation is limited
 - Setup scripts will automatically put the app in startup applications and will not need to be done manually
-- Insprash can be launched manually for testing by opening the directory and running Insprash.py with either `python Insprash.py` or `python3 Insprash.py`
+- Free Gemini API Keys have limits on prompts that can be called and fallback texts will be used if prompts run out
 
 ## License
 
