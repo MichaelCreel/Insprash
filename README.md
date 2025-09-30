@@ -5,7 +5,7 @@ Insprash is a customizable splash screen that greets users at login with inspiri
 ## Dependencies
 - Python, Tkinter, Google Gemini API
   - Windows:
-    Install Python 3 from [python.org](https://python.org)
+    Install [Python 3](https://python.org)
     Check "Add Python to PATH" during installation
     ```cmd
     pip install google-generativeai pillow
@@ -34,19 +34,31 @@ Insprash is a customizable splash screen that greets users at login with inspiri
 ## Installation
 
 ### PROBLEMS ON WINDOWS: Insprash currently has issues on Windows and may not run
+
+#### Manual Installation: 
+1. Download Git Zip Folder
+  - Click "Code" on this page (Dropdown Menu)
+  - Click "Download ZIP"
+  - Save to desired location
+2. Extract .zip folder (IMPORTANT: The extracted folder makes the app work. Save it to somewhere it won't bother you)
+  - Open the extracted folder
+3. Run the setup script for your operating system
+
+#### Terminal Installation: (Requires Git on Windows and Linux)
 1. Get a Gemini API Key
-  - Open [https://aistudio.google.com/apikey](https://aistudio.google.com/apikey)
+  - Open [Google AI Studio](https://aistudio.google.com/apikey)
   - Sign in with your Google account
   - Click "Create API key"
   - Copy the API key when it generates
       If you are copying installation commands, leave the API tab open to recopy the API key during setup
 2. Open a terminal
   - Windows:
-    `Windows + X`
-    Click PowerShell
+    `Windows`
+    Type "PowerShell"
+    `Enter`
   - Mac:
     `Command + Space`
-    Type Terminal
+    Type "Terminal"
     `Enter`
   - Linux:
     `Ctrl + Alt + T`
