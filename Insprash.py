@@ -1,7 +1,5 @@
 #!/usr/bin/env python3
 
-# Copyright 2025 Michael Creel
-
 import os
 import sys
 import random
@@ -10,15 +8,14 @@ import tkinter as tk
 import threading
 from PIL import Image, ImageTk, ImageDraw, ImageFont
 
-DURATION = 20000 # Duration of splash in miliseconds
-API_TIMEOUT = 10 # Duration for API Response
-GRAD_TOP = "#330c5a"
-GRAD_BOTTOM = "#831764"
-FALLBACK_TEXTS = [] #Fallbacks if Gemini API does not respond
-USE_GEMINI = True
-GEMINI_API_KEY = ""
-
-PROMPT = "Return 'Prompt not loaded'."
+DURATION = 20000 # Duration of splash screen in miliseconds
+API_TIMEOUT = 10 # Duration for API Response in seconds
+GRAD_TOP = "# 330c5a" # Default top gradient, replaced by gradient_colors file
+GRAD_BOTTOM = "# 831764" # Default bottom gradient, replaced by gradient_colors file
+FALLBACK_TEXTS = [] # Fallbacks if Gemini API does not respond. Received from fallback_lines file
+USE_GEMINI = True # Whether to use Gemini for generation, set to False if gemini_api_key is empty
+GEMINI_API_KEY = "" # API Key for calling Gemini API, loaded from gemini_api_key file
+PROMPT = "Return 'Prompt not loaded'." # Prompt for Gemini API Key call, loaded from prompt file
 
 root = None
 background_label = None
@@ -26,15 +23,17 @@ screen_width = None
 screen_height = None
 font = None
 
+# Manages the startup of the application
 def main():
     initialize()
     splash("Loading...")
 
+# Initializes necessary values for the application from local files
 def initialize():
     load_api_key()
     global GRAD_TOP, GRAD_BOTTOM, FALLBACK_TEXTS
 
-    #Initialize Gradient Colors
+    # Initialize Gradient Colors
     try:
         with open(get_source_path("gradient_colors"), "r") as f:
             lines = f.readlines()
@@ -43,7 +42,7 @@ def initialize():
     except Exception as e:
         print(f"Error loading gradient colors: {e}")
 
-    #Initialize Fallback Lines
+    # Initialize Fallback Lines
     try:
         with open(get_source_path("fallback_lines"), "r") as f:
             lines = f.readlines()
@@ -54,7 +53,7 @@ def initialize():
         print(f"Error loading fallback lines: {e}")
         FALLBACK_TEXTS = ["Welcome! Let's create something amazing today."]
 
-    #Initialize Prompt
+    # Initialize Prompt
     try:
         with open(get_source_path("prompt"), "r") as f:
             lines = f.readlines()
@@ -69,7 +68,7 @@ def update():
         root.after(0, lambda: update_splash(message))
     threading.Thread(target=worker, daemon=True).start()
 
-#Access file path
+# Method for accessing local files
 def get_source_path(filename):
     if getattr(sys, 'frozen', False):
         base_path = os.path.dirname(sys.executable)
@@ -77,7 +76,7 @@ def get_source_path(filename):
         base_path = os.path.dirname(os.path.abspath(__file__))
     return os.path.join(base_path, filename)
 
-#Store the API key for Gemini
+# Loads the API Key for Gemini API from local files
 def load_api_key():
     global GEMINI_API_KEY, USE_GEMINI
     try:
@@ -98,7 +97,7 @@ def load_api_key():
         print(f"Error loading API key: {e}, using fallback text only")
         USE_GEMINI = False
 
-#Gemini call to generate text
+# Call to Gemini API for text generation
 def generate_text():
     result = {"text": None}
     timeout_triggered = threading.Event()
@@ -123,15 +122,15 @@ def generate_text():
         else:
             result["text"] = "Welcome! Let's create something amazing today."
 
-    #Start Gemini call
+    # Start Gemini call
     thread = threading.Thread(target=gemini_call)
     thread.start()
 
-    #Start timer
+    # Start timer
     timer = threading.Timer(API_TIMEOUT, fallback)
     timer.start()
 
-    #Check for result or timeout
+    # Check for result or timeout
     while result["text"] is None and not timeout_triggered.is_set():
         thread.join(timeout=0.1)
 
@@ -139,11 +138,11 @@ def generate_text():
     return result["text"]
             
 
-#Generates the splash screen
+# Generates the splash screen
 def splash(message):
     global root, background_label, screen_width, screen_height, font
 
-    #Initialization
+    # Initialization
     root = tk.Tk()
     root.title("Inprash")
     root.attributes("-fullscreen", True)
@@ -158,24 +157,24 @@ def splash(message):
         print("Font not found")
         font = ImageFont.load_default()
     
-    #Update the splash screen
+    # Update the splash screen
     update_splash(message)
 
-    #Call update
+    # Call update
     root.after(100, update)
 
-    #Auto close
+    # Auto close
     root.after(DURATION, root.destroy)
 
-    #Early close with escape
+    # Early close with escape
     root.bind("<Escape>", lambda e: root.destroy())
     root.mainloop()
 
-#Update the splash screen
+# Update the splash screen
 def update_splash(message):
     global root, background_label, screen_width, screen_height, font
 
-    #Gradient
+    # Gradient
     gradient = Image.new("RGB", (1, screen_height), GRAD_TOP)
     top_rgb = tuple(int(GRAD_TOP[i:i+2], 16) for i in (1, 3, 5))
     bottom_rgb = tuple(int(GRAD_BOTTOM[i:i+2], 16) for i in (1, 3, 5))
@@ -188,7 +187,7 @@ def update_splash(message):
 
     gradient = gradient.resize((screen_width, screen_height))
 
-    #Text
+    # Text
     draw = ImageDraw.Draw(gradient)
     bbox = draw.textbbox((0, 0), message, font=font)
     text_width = bbox[2] - bbox[0]
@@ -197,7 +196,7 @@ def update_splash(message):
     y = (screen_height - text_height) //2
     draw.text((x,y), message, font=font, fill="white")
 
-    #Convert to Tk Image
+    # Convert to Tk Image
     background = ImageTk.PhotoImage(gradient)
     if background_label is None:
         background_label = tk.Label(root, image=background)
