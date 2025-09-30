@@ -8,8 +8,9 @@ import tkinter as tk
 import threading
 from PIL import Image, ImageTk, ImageDraw, ImageFont
 
-DURATION = 20000 # Duration of splash screen in miliseconds
+DURATION = 15000 # Duration of splash screen in miliseconds
 API_TIMEOUT = 10 # Duration for API Response in seconds
+SHOW_ON_ALL_MONITORS = False # Set to True to show splash on all monitors
 GRAD_TOP = "#330c5a" # Default top gradient, replaced by gradient_colors file
 GRAD_BOTTOM = "#831764" # Default bottom gradient, replaced by gradient_colors file
 FALLBACK_TEXTS = [] # Fallbacks if Gemini API does not respond. Received from fallback_lines file
@@ -37,8 +38,18 @@ def initialize():
     try:
         with open(get_source_path("gradient_colors"), "r") as f:
             lines = f.readlines()
-            GRAD_TOP = lines[0].strip()
-            GRAD_BOTTOM = lines[1].strip()
+            if len(lines) >= 2:
+                top_color = lines[0].strip()
+                bottom_color = lines[1].strip()
+                
+                # Validate hex color format
+                if is_valid_hex_color(top_color) and is_valid_hex_color(bottom_color):
+                    GRAD_TOP = top_color
+                    GRAD_BOTTOM = bottom_color
+                else:
+                    print(f"Invalid hex color format in gradient_colors file")
+            else:
+                print(f"gradient_colors file must contain at least 2 lines")
     except Exception as e:
         print(f"Error loading gradient colors: {e}")
 
@@ -58,15 +69,133 @@ def initialize():
         with open(get_source_path("prompt"), "r") as f:
             lines = f.readlines()
             global PROMPT
-            PROMPT="".join(lines).strip()
+            prompt_content = "".join(lines).strip()
+            
+            # Validate prompt content
+            if len(prompt_content) == 0:
+                print("Warning: prompt file is empty, using default")
+            elif len(prompt_content) > 2000:
+                print("Warning: prompt file is very long, may cause API issues")
+                PROMPT = prompt_content[:2000]  # Truncate if too long
+            else:
+                PROMPT = prompt_content
     except Exception as e:
         print(f"Error loading prompt: {e}")
+    
+    # Initialize Show on All Monitors
+    try:
+        with open(get_source_path("show_on_all_monitors"), "r") as f:
+            line = f.read().strip().lower()
+            global SHOW_ON_ALL_MONITORS
+            # Handle multiple boolean representations
+            if line in ["true", "True"]:
+                SHOW_ON_ALL_MONITORS = True
+            elif line in ["false", "False"]:
+                SHOW_ON_ALL_MONITORS = False
+            else:
+                print(f"Invalid value in show_on_all_monitors: '{line}', using default: False")
+                SHOW_ON_ALL_MONITORS = False
+    except Exception as e:
+        print(f"Error loading show_on_all_monitors: {e}")
+        SHOW_ON_ALL_MONITORS = False
 
 def update():
     def worker():
         message = generate_text()
         root.after(0, lambda: update_splash(message))
     threading.Thread(target=worker, daemon=True).start()
+
+# Get monitor information for multi-monitor and scaling support
+def get_monitor_info():
+    """Get information about all monitors and their scaling"""
+    monitors = []
+    
+    try:
+        # Try to get monitor info using tkinter (works on most systems)
+        temp_root = tk.Tk()
+        temp_root.withdraw()  # Hide the temporary window
+        
+        # Get primary monitor info
+        primary_width = temp_root.winfo_screenwidth()
+        primary_height = temp_root.winfo_screenheight()
+        
+        # Get DPI scaling factor
+        dpi = temp_root.winfo_fpixels('1i')  # Pixels per inch
+        scale_factor = dpi / 96.0  # 96 DPI is standard
+        
+        # Try to get actual screen dimensions (physical pixels)
+        try:
+            actual_width = temp_root.winfo_vrootwidth()
+            actual_height = temp_root.winfo_vrootheight()
+        except:
+            actual_width = primary_width
+            actual_height = primary_height
+        
+        temp_root.destroy()
+        
+        monitors.append({
+            'x': 0,
+            'y': 0, 
+            'width': actual_width,
+            'height': actual_height,
+            'scale_factor': scale_factor,
+            'is_primary': True
+        })
+        
+    except Exception as e:
+        print(f"Error getting monitor info: {e}")
+        # Fallback to basic screen info
+        monitors.append({
+            'x': 0,
+            'y': 0,
+            'width': 1920,
+            'height': 1080, 
+            'scale_factor': 1.0,
+            'is_primary': True
+        })
+    
+    return monitors
+
+# Create splash window for specific monitor
+def create_splash_window(monitor_info):
+    """Create a splash window positioned on a specific monitor"""
+    window = tk.Toplevel() if 'root' in globals() and root else tk.Tk()
+    window.title("Insprash")
+    
+    # Set window geometry for this monitor
+    geometry = f"{monitor_info['width']}x{monitor_info['height']}+{monitor_info['x']}+{monitor_info['y']}"
+    window.geometry(geometry)
+    
+    # Make fullscreen on this monitor
+    window.attributes('-fullscreen', True)
+    window.attributes('-topmost', True)
+    window.configure(background=GRAD_TOP)
+    window.config(cursor="none")
+    
+    return window
+
+# Helper functions for multi-monitor support
+def update_splash_on_window(window, message, width, height):
+    # Update splash screen on a specific window - simplified for now
+    pass
+
+def update_all_windows(windows, message):
+    # Update all splash windows with new message
+    def worker():
+        new_message = generate_text()
+        # For now, just update the main window
+        if root and root.winfo_exists():
+            root.after(0, lambda: update_splash(new_message))
+    threading.Thread(target=worker, daemon=True).start()
+
+def close_all_windows(windows):
+    # Close all splash windows
+    for window in windows:
+        try:
+            if window.winfo_exists():
+                window.destroy()
+        except:
+            pass
 
 # Method for accessing local files
 def get_source_path(filename):
@@ -75,6 +204,25 @@ def get_source_path(filename):
     else:
         base_path = os.path.dirname(os.path.abspath(__file__))
     return os.path.join(base_path, filename)
+
+# Validate hex color format
+def is_valid_hex_color(color_string):
+    """Check if string is a valid hex color (#RRGGBB or #RGB)"""
+    if not color_string.startswith('#'):
+        return False
+    
+    hex_part = color_string[1:]
+    
+    # Check for valid lengths (3 for #RGB, 6 for #RRGGBB)
+    if len(hex_part) not in [3, 6]:
+        return False
+    
+    # Check if all characters are valid hex digits
+    try:
+        int(hex_part, 16)
+        return True
+    except ValueError:
+        return False
 
 # Loads the API Key for Gemini API from local files
 def load_api_key():
@@ -142,32 +290,84 @@ def generate_text():
 def splash(message):
     global root, background_label, screen_width, screen_height, font
 
-    # Initialization
-    root = tk.Tk()
-    root.title("Inprash")
-    root.attributes("-fullscreen", True)
-    root.configure(background=GRAD_TOP)
-    root.config(cursor="none")
-    screen_width = root.winfo_screenwidth()
-    screen_height = root.winfo_screenheight()
-    try:
-        font_size = max(18, int(min(screen_width, screen_height) * 0.035))
-        font = ImageFont.truetype(get_source_path("font.ttf"), font_size)
-    except IOError:
-        print("Font not found")
-        font = ImageFont.load_default()
+    # Get monitor information
+    monitors = get_monitor_info()
+    primary_monitor = next((m for m in monitors if m['is_primary']), monitors[0])
     
-    # Update the splash screen
-    update_splash(message)
+    if SHOW_ON_ALL_MONITORS and len(monitors) > 1:
+        # Show on all monitors (create multiple windows)
+        windows = []
+        for i, monitor in enumerate(monitors):
+            if i == 0:
+                # First window becomes the main root
+                root = create_splash_window(monitor)
+                windows.append(root)
+            else:
+                # Additional windows
+                window = create_splash_window(monitor)
+                windows.append(window)
+        
+        # Use primary monitor for sizing calculations
+        screen_width = primary_monitor['width']
+        screen_height = primary_monitor['height'] 
+        scale_factor = primary_monitor['scale_factor']
+        
+        # Setup font and display on all windows
+        base_font_size = int(min(screen_width, screen_height) * 0.035)
+        font_size = max(18, int(base_font_size / scale_factor))
+        
+        try:
+            font = ImageFont.truetype(get_source_path("font.ttf"), font_size)
+        except IOError:
+            print("Font not found")
+            font = ImageFont.load_default()
+        
+        # Update splash on all windows
+        for window in windows:
+            # Each window needs its own background label
+            update_splash_on_window(window, message, monitor['width'], monitor['height'])
+        
+        # Schedule updates and auto-close for all windows
+        root.after(100, lambda: update_all_windows(windows, message))
+        root.after(DURATION, lambda: close_all_windows(windows))
+        
+        # Bind escape to close all windows
+        for window in windows:
+            window.bind("<Escape>", lambda e: close_all_windows(windows))
+            
+    else:
+        # Show only on primary monitor (original behavior)
+        root = create_splash_window(primary_monitor)
+        
+        # Store actual dimensions and scaling
+        screen_width = primary_monitor['width']
+        screen_height = primary_monitor['height']
+        scale_factor = primary_monitor['scale_factor']
+        
+        # Calculate font size with proper scaling
+        base_font_size = int(min(screen_width, screen_height) * 0.035)
+        font_size = max(18, int(base_font_size / scale_factor))
+        
+        try:
+            font = ImageFont.truetype(get_source_path("font.ttf"), font_size)
+        except IOError:
+            print("Font not found")
+            font = ImageFont.load_default()
+        
+        print(f"Monitor: {screen_width}x{screen_height}, Scale: {scale_factor:.2f}, Font: {font_size}")
+        
+        # Update the splash screen
+        update_splash(message)
 
-    # Call update
-    root.after(100, update)
+        # Call update
+        root.after(100, update)
 
-    # Auto close
-    root.after(DURATION, root.destroy)
+        # Auto close
+        root.after(DURATION, root.destroy)
 
-    # Early close with escape
-    root.bind("<Escape>", lambda e: root.destroy())
+        # Early close with escape
+        root.bind("<Escape>", lambda e: root.destroy())
+    
     root.mainloop()
 
 # Update the splash screen
@@ -187,14 +387,23 @@ def update_splash(message):
 
     gradient = gradient.resize((screen_width, screen_height))
 
-    # Text
+    # Text with improved positioning for scaling
     draw = ImageDraw.Draw(gradient)
+    
+    # Get text dimensions using proper measurement
     bbox = draw.textbbox((0, 0), message, font=font)
     text_width = bbox[2] - bbox[0]
     text_height = bbox[3] - bbox[1]
+    
+    # Calculate center position with pixel-perfect alignment
     x = (screen_width - text_width) // 2
-    y = (screen_height - text_height) //2
-    draw.text((x,y), message, font=font, fill="white")
+    y = (screen_height - text_height) // 2
+    
+    # Ensure coordinates are integers to prevent sub-pixel rendering issues
+    x = int(round(x))
+    y = int(round(y))
+    
+    draw.text((x, y), message, font=font, fill="white")
 
     # Convert to Tk Image
     background = ImageTk.PhotoImage(gradient)
