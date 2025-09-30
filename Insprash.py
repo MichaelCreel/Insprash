@@ -16,6 +16,7 @@ GRAD_TOP = "#330c5a"
 GRAD_BOTTOM = "#831764"
 FALLBACK_TEXTS = [] #Fallbacks if Gemini API does not respond
 USE_GEMINI = True
+GEMINI_API_KEY = ""
 
 PROMPT = "Return 'Prompt not loaded'."
 
@@ -46,9 +47,12 @@ def initialize():
     try:
         with open(get_source_path("fallback_lines"), "r") as f:
             lines = f.readlines()
-            FALLBACK_TEXTS=lines
+            FALLBACK_TEXTS = [line.strip() for line in lines if line.strip()]
+            if not FALLBACK_TEXTS:
+                FALLBACK_TEXTS = ["Welcome! Let's create something amazing today."]
     except Exception as e:
         print(f"Error loading fallback lines: {e}")
+        FALLBACK_TEXTS = ["Welcome! Let's create something amazing today."]
 
     #Initialize Prompt
     try:
@@ -75,18 +79,24 @@ def get_source_path(filename):
 
 #Store the API key for Gemini
 def load_api_key():
-    global GEMINI_API_KEY
-    key=""
-    with open(get_source_path("gemini_api_key"), "r") as f:
-        key=f.read().strip()
-        if key == "null" or key == "":
-            USE_GEMINI = False
-        else:
-            USE_GEMINI = True
-            genai.configure(api_key=key)
-            GEMINI_API_KEY=key
-            genai.configure(api_key=key)
-    print("Loaded API Key")
+    global GEMINI_API_KEY, USE_GEMINI
+    try:
+        with open(get_source_path("gemini_api_key"), "r") as f:
+            key = f.read().strip()
+            if key == "null" or key == "" or key == "none":
+                USE_GEMINI = False
+                print("No API key provided, using fallback text only")
+            else:
+                USE_GEMINI = True
+                genai.configure(api_key=key)
+                GEMINI_API_KEY = key
+                print("Loaded API Key")
+    except FileNotFoundError:
+        print("API key file not found, using fallback text only")
+        USE_GEMINI = False
+    except Exception as e:
+        print(f"Error loading API key: {e}, using fallback text only")
+        USE_GEMINI = False
 
 #Gemini call to generate text
 def generate_text():
@@ -96,9 +106,9 @@ def generate_text():
     def gemini_call():
         if timeout_triggered.is_set():
             return
-        if not USE_GEMINI:
+        if USE_GEMINI:
             try:
-                model = genai.GenerativeModel("gemini-2.5-flash")
+                model = genai.GenerativeModel("gemini-2.0-flash-exp")
                 response = model.generate_content(PROMPT)
                 if not timeout_triggered.is_set():
                     result["text"] = response.text.strip()
@@ -108,7 +118,10 @@ def generate_text():
     def fallback():
         timeout_triggered.set()
         print("Gemini API Timeout, using fallback.")
-        result["text"] = random.choice(FALLBACK_TEXTS)
+        if FALLBACK_TEXTS:
+            result["text"] = random.choice(FALLBACK_TEXTS)
+        else:
+            result["text"] = "Welcome! Let's create something amazing today."
 
     #Start Gemini call
     thread = threading.Thread(target=gemini_call)
@@ -189,11 +202,10 @@ def update_splash(message):
     if background_label is None:
         background_label = tk.Label(root, image=background)
         background_label.place(x=0, y=0, relwidth=1, relheight=1)
+        background_label.image = background
     else:
         background_label.configure(image=background)
         background_label.image = background
-
-    root.background = background
 
 if __name__ == "__main__":
     print("Insprash Launching...")
