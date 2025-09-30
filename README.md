@@ -80,6 +80,7 @@ Insprash is a customizable splash screen that greets users at login with inspiri
 - Gradient colors can be changed by editing hexadecimal colors in `gradient_colors`
 - Fallback lines can be changed by editing `fallback_lines`
 - Gemini prompt can be changed by editing `prompt`
+- Multi-monitor display can be changed by editing `show_on_all_monitors`
 - Gemini has limited tokens on free API keys, so AI generation is limited
 - Setup scripts will automatically put the app in startup applications and will not need to be done manually
 - Insprash can be launched manually for testing by opening the directory and running Insprash.py with either `python Insprash.py` or `python3 Insprash.py`
