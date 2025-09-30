@@ -85,12 +85,13 @@ def initialize():
     # Initialize Show on All Monitors
     try:
         with open(get_source_path("show_on_all_monitors"), "r") as f:
-            line = f.read().strip().lower()
+            line = f.read().strip()
             global SHOW_ON_ALL_MONITORS
-            # Handle multiple boolean representations
-            if line in ["true", "True"]:
+            # Handle multiple boolean representations (case-insensitive)
+            line_lower = line.lower()
+            if line_lower in ["true", "1", "yes", "on", "enabled"]:
                 SHOW_ON_ALL_MONITORS = True
-            elif line in ["false", "False"]:
+            elif line_lower in ["false", "0", "no", "off", "disabled"]:
                 SHOW_ON_ALL_MONITORS = False
             else:
                 print(f"Invalid value in show_on_all_monitors: '{line}', using default: False")
@@ -323,9 +324,10 @@ def splash(message):
             font = ImageFont.load_default()
         
         # Update splash on all windows
-        for window in windows:
+        for i, window in enumerate(windows):
             # Each window needs its own background label
-            update_splash_on_window(window, message, monitor['width'], monitor['height'])
+            current_monitor = monitors[i] if i < len(monitors) else monitors[0]
+            update_splash_on_window(window, message, current_monitor['width'], current_monitor['height'])
         
         # Schedule updates and auto-close for all windows
         root.after(100, lambda: update_all_windows(windows, message))
