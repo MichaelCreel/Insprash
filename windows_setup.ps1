@@ -35,7 +35,40 @@ if (-not $pythonPath) {
     exit 1
 }
 
-Write-Host "Found Python: $pythonPath" -ForegroundColor Green
+# Prefer pythonw for silent operation (no console window)
+if ($pythonPath -eq "python") {
+    # Try to find pythonw instead
+    try {
+        $null = Get-Command "pythonw" -ErrorAction SilentlyContinue
+        if ($?) {
+            $pythonPath = "pythonw"
+        }
+    } catch {}
+}
+
+Write-Host "Using Python: $pythonPath" -ForegroundColor Green
+
+# Create launcher batch file (silent operation for startup)
+$launcher = "@echo off`ncd /d `"%~dp0`"`n$pythonPath Insprash.py"
+Set-Content -Path "LaunchInsprash.bat" -Value $launcher
+Write-Host "Created LaunchInsprash.bat" -ForegroundColor Green
+
+# Create test launcher with pause for manual testing
+$testLauncher = "@echo off`ncd /d `"%~dp0`"`n$pythonPath Insprash.py`necho.`necho Insprash finished. Press any key to close...`npause >nul"
+Set-Content -Path "TestInsprash.bat" -Value $testLauncher
+Write-Host "Created TestInsprash.bat for manual testing" -ForegroundColor Green
+
+# Test the application manually
+Write-Host "`nTesting the application..." -ForegroundColor Yellow
+$testChoice = Read-Host "Would you like to test Insprash now? (y/n)"
+if ($testChoice -eq "y" -or $testChoice -eq "Y") {
+    try {
+        Start-Process -FilePath "TestInsprash.bat" -Wait
+        Write-Host "Test completed" -ForegroundColor Green
+    } catch {
+        Write-Host "Test failed: $($_.Exception.Message)" -ForegroundColor Yellow
+    }
+}
 
 # Check if required files exist
 $requiredFiles = @("Insprash.py", "fallback_lines", "gradient_colors", "prompt", "font.ttf")
@@ -57,19 +90,6 @@ if (-not $key) {
 Set-Content -Path "gemini_api_key" -Value $key
 Write-Host "API Key saved" -ForegroundColor Green
 
-$launcher = "@echo off`ncd /d `"%~dp0`"`n$pythonPath Insprash.py`npause"
-Set-Content -Path "LaunchInsprash.bat" -Value $launcher
-Write-Host "Created LaunchInsprash.bat" -ForegroundColor Green
-
-# Test the batch file
-Write-Host "`nTesting the launcher..." -ForegroundColor Yellow
-try {
-    $testResult = & ".\LaunchInsprash.bat"
-    Write-Host "Launcher test completed" -ForegroundColor Green
-} catch {
-    Write-Host "WARNING: Launcher test failed: $($_.Exception.Message)" -ForegroundColor Yellow
-}
-
 # Ensure startup folder exists
 $startupFolder = "$env:APPDATA\Microsoft\Windows\Start Menu\Programs\Startup"
 if (-not (Test-Path $startupFolder)) {
@@ -87,11 +107,14 @@ if (-not (Test-Path $startupFolder)) {
 }
 
 Write-Host "`nSetup complete!" -ForegroundColor Green
-Write-Host "You can test by running: .\LaunchInsprash.bat" -ForegroundColor Cyan
-Write-Host "Or log out and back in to test automatic startup." -ForegroundColor Cyan
+Write-Host "Files created:" -ForegroundColor Cyan
+Write-Host "  - LaunchInsprash.bat (silent startup version)" -ForegroundColor White
+Write-Host "  - TestInsprash.bat (testing version with pause)" -ForegroundColor White
+Write-Host "`nTo test: Run TestInsprash.bat" -ForegroundColor Cyan
+Write-Host "The app will automatically start on login via LaunchInsprash.bat" -ForegroundColor Cyan
 
 # Check for required Python packages
 Write-Host "`nIMPORTANT: Make sure you have the required Python packages installed:" -ForegroundColor Yellow
-Write-Host "pip install pillow google-generativeai requests" -ForegroundColor White
+Write-Host "pip install pillow google-generativeai" -ForegroundColor White
 
 pause

@@ -10,8 +10,8 @@ from PIL import Image, ImageTk, ImageDraw, ImageFont
 
 DURATION = 20000 # Duration of splash screen in miliseconds
 API_TIMEOUT = 10 # Duration for API Response in seconds
-GRAD_TOP = "# 330c5a" # Default top gradient, replaced by gradient_colors file
-GRAD_BOTTOM = "# 831764" # Default bottom gradient, replaced by gradient_colors file
+GRAD_TOP = "#330c5a" # Default top gradient, replaced by gradient_colors file
+GRAD_BOTTOM = "#831764" # Default bottom gradient, replaced by gradient_colors file
 FALLBACK_TEXTS = [] # Fallbacks if Gemini API does not respond. Received from fallback_lines file
 USE_GEMINI = True # Whether to use Gemini for generation, set to False if gemini_api_key is empty
 GEMINI_API_KEY = "" # API Key for calling Gemini API, loaded from gemini_api_key file
