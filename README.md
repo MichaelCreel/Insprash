@@ -96,6 +96,7 @@ Insprash is a customizable splash screen that greets users at login with inspiri
 - Gemini has limited tokens on free API keys, so AI generation is limited
 - Setup scripts will automatically put the app in startup applications and will not need to be done manually
 - Free Gemini API Keys have limits on prompts that can be called and fallback texts will be used if prompts run out
+- The splash screen will not display properly with mixed monitor fractional scaling, so the same scale must be used for proper display
 
 ## License
 
